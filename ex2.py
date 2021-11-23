@@ -69,6 +69,22 @@ def svm_train(x, y):
                         w[j] *= (1-lam_n)
     return w
 
+def pa_train(x, y):
+    w = np.zeros((label, features))
+    for t in range(100):
+        randomize = np.arange(len(x))
+        np.random.shuffle(randomize)
+        x = x[randomize]
+        y = y[randomize]
+        for i in range(len(x)):
+            y_r = np.argmax(np.dot(w, x[i]))
+            loss_func = max(0, 1 - np.dot(w[y[i]], x[i]) + np.dot(w[y_r], x[i]))
+            if loss_func > 0:
+                t = loss_func/(2*(np.linalg.norm(x[i])**2))
+                w[y[i]] += np.dot(t, x[i])
+                w[y_r] -= np.dot(t, x[i])
+    return w
+
 
 def find_the_best_k_for_knn(train_x, train_y):
     max_k = 0
@@ -117,7 +133,6 @@ test_arr = np.delete(test_arr, 5, 1)
 f = open(out_fname, "w+")
 w_per = per_train(x_arr.copy(), y_arr.copy())
 w_svm = svm_train(x_arr.copy(), y_arr.copy())
-
+w_pa  = pa_train(x_arr.copy(), y_arr.copy())
 for i in range(len(test_arr)):
-    f.write(
-        f"knn: {knn_model(3, x_arr, y_arr, test_arr[i])}, perceptron: {np.argmax(np.dot(w_per, test_arr[i]))}, svm: {np.argmax(np.dot(w_svm, test_arr[i]))}, pa: {0}\n")
+    f.write(f"knn: {knn_model(3, x_arr, y_arr, test_arr[i])}, perceptron: {np.argmax(np.dot(w_per, test_arr[i]))}, svm: {np.argmax(np.dot(w_svm, test_arr[i]))}, pa: {np.argmax(np.dot(w_pa, test_arr[i]))}\n")
