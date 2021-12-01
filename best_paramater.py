@@ -45,6 +45,8 @@ def per_train(n, T, x, y):
     return w
 
 
+
+
 def svm_train(lamda, n, T, x, y):
     lam_n = lamda * n
     w = np.zeros((label, features))
@@ -55,12 +57,19 @@ def svm_train(lamda, n, T, x, y):
         y = y[randomize]
         for i in range(len(x)):
             y_r = np.argmax(np.dot(w, x[i]))
+            if y_r == y[i]:
+                tmp = np.dot(w, x[i])
+                tmp[y[i]] = -np.inf
+                y_r = np.argmax(tmp)
             loss_func = max(0, 1 - np.dot(w[y[i]], x[i]) + np.dot(w[y_r], x[i]))
             if loss_func > 0:
                 w[y[i]] = np.dot(w[y[i]], (1 - lam_n)) + np.dot(n, x[i])
                 w[y_r] = np.dot(w[y_r], (1 - lam_n)) - np.dot(n, x[i])
-            for j in range(label):
-                if j != y_r and j != y[i]:
+                for j in range(label):
+                    if j != y_r and j != y[i]:
+                        w[j] *= (1 - lam_n)
+            else:
+                for j in range(label):
                     w[j] *= (1 - lam_n)
     return w
 
@@ -72,16 +81,16 @@ def parms_svm(x_train, y_train):
     max3_success=0
     max_3n=1
     max_lamda3=1
-    for epoch in range(1,200):
+    for epoch in range(40,200):
         max_lamda2 = 1
         max2_success = 0
         max_n = 1
         n = 1
-        while n > 0.0000001:
+        while n > 0.001:
             max_lamda = 1
-            lamda = 0.1
+            lamda = 0.01
             max_success = 0
-            while lamda >= 0.00000000001:
+            while lamda >= 0.0000001:
                 success = 0
                 i = 0
                 while i < per_valid:
@@ -111,6 +120,7 @@ def parms_svm(x_train, y_train):
                 max_n = n
             n /= 10
         if max2_success > max3_success:
+            print(f"11111")
             max3_success = max2_success
             max_3n = max_n
             max_lamda3 = max_lamda2
@@ -208,11 +218,15 @@ def pa_train(T,x, y):
         y = y[randomize]
         for i in range(len(x)):
             y_r = np.argmax(np.dot(w, x[i]))
-            loss_func = max(0, 1 - np.dot(w[y[i]], x[i]) + np.dot(w[y_r], x[i]))
-            if loss_func > 0:
-                t = loss_func/(2*(np.linalg.norm(x[i])**2))
-                w[y[i]] += np.dot(t, x[i])
-                w[y_r] -= np.dot(t, x[i])
+            if y_r == y[i]:
+                tmp = np.dot(w, x[i])
+                tmp[y[i]]= -np.inf
+                y_r = np.argmax(tmp)
+            if y_r != y[i]:
+                loss_func = max(0, 1 - np.dot(w[y[i]], x[i]) + np.dot(w[y_r], x[i]))
+                tau = loss_func / (2 * (np.linalg.norm(x[i]) ** 2))
+                w[y[i]] += np.dot(tau, x[i])
+                w[y_r] -= np.dot(tau, x[i])
     return w
 
 def epoch_parm_pa(x_train, y_train):
@@ -255,12 +269,11 @@ normal(x_arr)
 new_column = [1 for _ in range(len(x_arr))]
 x_arr = np.insert(x_arr, 0, new_column, axis=1)
 x_arr = np.delete(x_arr, 5, 1)
-# x_arr = np.delete(x_arr, 5, 1)
 
 y_arr = np.loadtxt(train_y).astype(int)
-epoch_parm_pa(x_arr,y_arr)
-# parms_percepteron(x_arr,y_arr)
-#parms_svm(x_arr, y_arr)
+#epoch_parm_pa(x_arr,y_arr)
+#parms_percepteron(x_arr,y_arr)
+parms_svm(x_arr, y_arr)
 # k_parm_knn(x_arr,y_arr)
 test_arr = np.loadtxt(test_x, delimiter=',')
 # test_arr = test_arr.reshape(-1, 5)
